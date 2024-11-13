@@ -75,6 +75,7 @@ evaluations.
 
 To illustrate these three principles, we use [Mirzadeh et al. (2024)](https://arxiv.org/pdf/2410.05229) as a case study---a recent paper that received substantial attention from the LLM research community (e.g. see [this](https://machinelearning.apple.com/research/gsm-symbolic), [this](https://www.reddit.com/r/singularity/comments/1g1zphu/apple_ai_researchers_question_openais_claims/), or [this](https://x.com/MFarajtabar/status/1844456880971858028)).
 We review their methods, identify gaps in their analysis, and offer a more rigorous statistical assessment of their claims.
+<!-- I like this, we are not objecting the claims just offer statistical analysis. -->
 
 
 # 3. Summary of [Mirzadeh et al. (2024)](https://arxiv.org/pdf/2410.05229)
@@ -162,7 +163,7 @@ The figure below illustrates how the probability of answering a question correct
 The findings indicate that LM performance is negatively affected by both the number of digits and the number of carry operations in the sum. 
 I.e. as the numbers get larger and the number of carry operations increases, accuracy declines.
 This suggests that LMs make errors similar to those made by humans, such as forgetting carry operations. 
-Detailed regressionresults can be found in the Appendix.
+Detailed regression results can be found in the Appendix.
 
 <!-- Model | 1 digit | 2 digits | 3 digits | 4 digits | 5 digits | 6 digits
 --- | --- | --- | --- | --- | --- | ---
@@ -185,7 +186,8 @@ Even if a model applies consistent reasoning, it may still make arithmetic error
 
 **How much variation is expected?**  
 By now, it should be clear that the answer to this question depends on the assumptions we make about the data.
-One reasonable assumption we could make is that each model $m=1, \dots, 25$, answers each question $n=1,\dots,100$ correctly with some probability $p_{m,n}$.
+One reasonable assumption we could make is that each model $$m=\{1,\dots,25\}$$, answers each question $$n=\{1,\dots,100\}$$ correctly with some probability $p_{m,n}$.
+<!-- Without the double $$ the equations did not render for me because of the \dots  -->
 Unfortuantely, since the paper does not provide question-level performance data, for the purposes of this analysis, we must further assume that this probability is constant across questions, that is $p_{m,n}=p_m$ for all $n$. 
 
 Thus, an LM answering questions is modelled as an independent and identically distributed Bernoulli trial with a model-specific success probability $p_m$.
@@ -199,8 +201,14 @@ $$N \cdot p_m \cdot (1-p_m).$$
 
 This variance is maximised when $p_m=1/2$ and goes to $0$ as $p_m$ approaches $0$ or $1$.
 
+<!-- Probably use expected variation to follow the subsection title and also to avoid confusion with Normal distribution. -->
 To quantify what constitutes "normal" variation under our assumption, we can construct confidence intervals (CI) for the point estimates of $p_m$ (these are reported in the second column of Table 1 in the Appendix of the paper). 
+<!-- Perhpas better to phrase it as the score on the GSM8K 100 questions, reported in Table 1, can be used as point estimate of $p_m$ on the GSM8K dataset. To make it clear that the authors do not report it as a point estimate of $p_m$. Af first reading it gives an impression that the paper also talks about Binomial distribution and so it reports the success probability in some table. Also we need to be clear about for which dataset with estimate the $p_m$, GSM8K or GSM-Symbolic -->
 There are different ways to construct CI for the [Binomial proportion](https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval). Figure XX below shows [Wilson score](https://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Wilson_score_interval) intervals. (See Appendix for more results.)
+<!-- Needs more text explaining exactly what the figure shows, and also we need that text in the figure's caption. For example, what is the CI around the GSM-Symbolic. Also not sure if it is good to mix the two like this. The reds are estimated CI and the blues are, I assume, just one standard deviation from the mean, as reported in Table 1 of the paper. It is a bit complicated to decide what is best here. Some of the options are: 
+  1) report 1.96 times the standard deviation, to get 95% CI (perhaps this is already what the figures shows) but this assumes Normal distribution.
+  2) ignore the standard deviation from the Table 1 of the paper, and just treat the reported means as a new set of $p_m^{\prime}$ and then do the CI the same you did them for the reds, using the Wilson score. 
+Whatever you decide is best, make it clear in the text and in the Figure's caption. -->
 
 <!-- {{< figure library="true" src="assets/img/2025-04-28-towards-more-rigorous-llm-evals/wilson_0.95.png" title="95% Wilson score intervals for the point estimates of $p_m$." numbered="false">}} -->
 {% include figure.html 
@@ -228,10 +236,12 @@ For the models shown in this figure, the GSM8K accuracy ranges from 74% for the 
 The weakest model, Llama3-8B-instruct, shows a much wider variation in accuracy in the range $\sim (69\%, 81\%)$. 
 The strongest model, GPT-4o, has a considerably narrower spread, between $\sim (91\%, 98\%)$. 
 Critically, for both of these models, **the variation in GSM-Symbolic performance falls well within the CIs we calculated above!** 
+<!-- I think is best if you make it clear again which CI you are referring, i.e. for GSM8K, `the variation in GSM-Symbolic performance falls well within the CIs of GSM8K performance we calculated above!` -->
 These are $(64.6\%, 81.6\%)$ for Llama3-8B-instruct and $(88.8\%, 97.8\%)$ for GPT-4o. 
 This suggests that the variation in performance for these two models is quite expected.
 
 The table below compares the 95% Wilson score intervals to the approximate accuracy ranges reported in the paper:
+<!-- Perhaps best shown as a figure? Similar to the one above. -->
 
 | Model                          | 95% Wilson score CI | Reported ranges (approximate)  |
 |--------------------------------|---------------------|-----------------------|
@@ -251,11 +261,12 @@ The table below compares the 95% Wilson score intervals to the approximate accur
 95% Wilson score intervals for the point estimates of $p_m$ and reported ranges, approximated from Figure 1 in Mirzadeh et al. (2024) <d-cite key='mirzadeh2024gsm'></d-cite>, as well as Figures 10 and 12 from the Appendix of the paper.
 </div>
 
-Note that our confidence intervals are wider than the implied ranges in the figures in the paper, i.e. under the iid Bernoulli assumption, the variation is actually **larger** than what is observed.
+Note that our confidence intervals are wider than the implied ranges in the figures in the paper, i.e. under the i.i.d. Bernoulli assumption, the variation is actually **larger** than what is observed.
 This discrepancy is likely to be explained by the unmodelled correlations between questions---as initially suggested, a more reasonable assumption would be to model the probability of success on a question level, $p_{m,n}$, rather than assuming each question is equally likely to be answered correctly. 
 The analysis can be repeated once (if) the detailed question-level data becomes available.
 
 **Verdict:** The observed variability in GSM-Symbolic performance is not inherently surprising, and is in fact expected.
+<!-- An idea I had here, how is the variability in the "adding two numbers" task? Are the results also within the 95% CI of assuming Binomial distribution?  -->
 
 
 ## 4.2 Performance decline on GSM-Symbolic
@@ -283,10 +294,12 @@ Looking at the example template (Figure 1 from the paper, reproduced above), we 
 
 In other words, the original GSM8K question cannot be generated from the proposed symbolic template.
 A more appropriate sampling range for `ans` might be $(5, 100)$ (i.e. the same as $x$, $y$ and $z$), and for `total` might be $(10, 100)$.
+<!-- Perhaps mention again Fig 1, because I was confused about which x, y, and z you are talking about.  -->
 
 
 As we saw in Section 4.1.1, the accuracy of both models decreases as the number of digits increases, indicating that larger inputs are harder to process.
-We use the logistic regression model from that section try quantify the difference in accuracy that might arise from using the ranges in the paper vs those we propose here (the "reasoning" that gets us to the correct mathematical expression is correct.)
+We use the logistic regression model from that section to quantify the difference in accuracy that might arise from using the ranges in the paper vs those we propose here (the "reasoning" that gets us to the correct mathematical expression is correct.)
+<!-- Bit unclear what you want to say here, especially what's in the brackets. -->
 
 Back of the envelope calculation:
 
@@ -309,17 +322,17 @@ If all 3 operations involve two-digit numbers, the probabilities are (table abov
 [I'm redoing this as passing inputs through the logreg and averaging over XX samples as opposed to passing an average input through logreg]
 
 If the number ranges in GSM-Symbolic are systematically chosen to be larger than those in GSM8K (and don't even include the original question values), then it cannot claimed that the datasets come from the same distribution.
-Tokenisation is one mechansim that explains why this matters; larger number ranges in GSM-Symbolic may inherently disadvantage certain (and eventually all) models, potentially explaining some of the observed performance differences between models and datasets.
+Tokenisation is one mechanism that explains why this matters; larger number ranges in GSM-Symbolic may inherently disadvantage certain (and eventually all) models, potentially explaining some of the observed performance differences between models and datasets.
 
 > We have also observed the performance of LLMs deteriorating as question complexity increases.
 
 Plausible that the reasoning is harder when more clauses are introduced.
-worth noting that adding more clauses involves more arithmetic operations; 
+It is worth noting that adding more clauses involves more arithmetic operations; 
 more thorough analysis is needed to control for that variability.
 
-The same analysis is applicable to more complex questions; e.g. adding one extra clause, even if it takes only one operation --> similalry for 2 clauses;
+The same analysis is applicable to more complex questions; e.g. adding one extra clause, even if it takes only one operation --> similarly for 2 clauses;
 
-Repeat reasoning: translating the text to a sequence of operations; what the paper tests is whether models can do that *and* perofrm the operations correctly. The rest of this post will not deal with reasoning; 
+Repeat reasoning: translating the text to a sequence of operations; what the paper tests is whether models can do that *and* perform the operations correctly. The rest of this post will not deal with reasoning; 
 
 **Verdict:** Some indication that distributions might differ. Contamination is not mutually exclusive. TODO
 
@@ -339,6 +352,7 @@ For many models in Figure 2, the dashed line is in the right tail of the distrib
 
 The right tool to determine whether these differences are statistically significant is hypothesis testing.
 For each model $m$, we want to test whether its success probability on GSM8K, denoted $p_{m, 8k}$, equals its success probability on GSM-Symbolic, denoted $p_{m,symb}$. 
+<!-- Perhaps use different notation as you used $p_{m,n}$ above where $n$ is the question. So maybe $p_m^{8k}$ is better. -->
 This equality forms our *null hypothesis*. 
 Our *alternative hypothesis* can take two forms:
 
@@ -352,6 +366,11 @@ H_0: p_{m, 8k} = p_{m, symb} \quad\quad\quad H^\text{one-sided}_A: p_{m, 8k} > p
 $$
 
 We use Fisher exact test for the binomial proportion for all models:
+<!-- Perhaps the Fisher exact test figure should be with horizontal bars so the model name is easier to read and it similar to the CI intervals plot. -->
+<!-- Also, which models reject the null is hard to notice, perhaps put the stars on the bars or before the model name instead of at the end. -->
+<!-- I think also we need to explain how $p_{m,symb}$ was estimated. -->
+<!-- And finally, I am not sure if there is a better plot to show this data.  -->
+<!-- Maybe it is best if it is a two column table where with bold the significant results are highlighted? -->
 
 <!-- {{< figure library="true" src="assets/img/2025-04-28-towards-more-rigorous-llm-evals/fisher_pvalues.png" title="Fisher exact test: p-values for two-sided and one-sided tests across models. We use (*) to indicate models for which the null can be rejected at the 5% significance level in favour of the two-sided alternative." numbered="false">}} -->
 {% include figure.html 
@@ -372,8 +391,10 @@ Analysing models independently, 21 out of 25 models show statistically equivalen
 There is a trend that that many models perform worse on GSM-Symbolic than on GSM8K. To assess the statistical significance of this systematic trend, we can conduct what is known as a *paired* difference test. The Wilcoxon signed-rank test would be an appropriate one to apply in our case with two important caveats.  
 
 **Caveat 1**: Non-independent data. It will be incorrect to perform the test on all 25 models as these are not independent. There are several types of dependence to consider. Most obviously, the base models and their instruct-tuned version are clearly related (e.g. Gemma2-9b and Gemma2-9b-it). I’d also argue that different sizes within the same model family cannot be considered independent (e.g. mini-small-medium for Phi or 2b-9b-27b for Gemma); minor version updates (e.g. Mistral v0.1 vs 0.3, Phi 3 vs 3.5) will also likely be correlated. So although we have a sample of 25 models, the “effective” sample size is much, much smaller. 
+<!-- one "much" is enough :) -->
 
 Here’s our attempt to come up with independent set of models. In each model family, we take the latest, largest instruct-tuned version. We repeat this by also taking the smallest version. This gives us two sets of 7 models (differences between them are in italics):
+<!-- the text in brackets is leftover text? -->
 
 - Largest subset of models: Gemma2-27b-it, Phi-3.5-mini-instruct, Mistral-7b-instruct-v0.3, Mathstral-7b-v0.1, Llama3-8b-instruct, GPT-4o, o1-preview.
 
@@ -381,7 +402,7 @@ Here’s our attempt to come up with independent set of models. In each model fa
 
 **Caveat 2**: The results of GSM-Symbolic are averages across 50 datasets, whilst GSM8K is based on a single sample. We'd want to compare accuracies on GSM8K vs accuracies on each of the 50 datasets (at the time of writing these are not publicly available). We're still trying to figure out what is the correct way to handle the unbalanced number of samples in this case is (more on this to come). 
 
-With those two caveats, here is the hypothesis and results:
+With those two caveats, here are the hypotheses and the results:
 
 - Two-sided: The success probabilities are different
 $$
@@ -392,7 +413,7 @@ $$
 H_0: p_{8k} = p_{symb} \quad\quad\quad H_A^\text{one-sided}: p_{8k} > p_{symb}.
 $$
 
-where  $p_{8k}=[p_{1,8k}, \dots, p_{7,8k}]$ and $p_{symb}= [p_{1,symb}, \dots, p_{7,symb}]$.
+where  $$p_{8k}=[p_{1,8k}, \dots, p_{7,8k}]$$ and $$p_{symb}= [p_{1,symb}, \dots, p_{7,symb}]$$.
 
 - Largest subset of models: 
 
@@ -425,11 +446,13 @@ The paper highlights this on multiple occasions, most notably in Section 4.3. So
   caption="Figure 6 from Mirzadeh et al. (2024) <d-cite key='mirzadeh2024gsm'></d-cite>"
 %}
 
-Here we have 4 different datasets: the baseline GSM-Symbolic, an easier version of it (M1) and two harder versions of it (P1 and P2). It is not unreasonable to expect that a model might perform differently on different datasets, for example better on the easier ones and worse on harder ones. We can make a similar assumption as before, namely that the answers a model m gives to questions of difficulty $d=-1, 0, 1, 2$ are i.i.d. Bernoulli trials with success probability $p_{m,d}$. The distribution of the total number of correct answers is then $\text{Bin}(N=100, p_{m,d})$, which has variance $N \cdot p_{m,d} \cdot (1 - p_{m,d})$.
+Here we have 4 different datasets: the baseline GSM-Symbolic, an easier version of it (M1) and two harder versions of it (P1 and P2). It is not unreasonable to expect that a model might perform differently on different datasets, for example better on the easier ones and worse on harder ones. We can make a similar assumption as before, namely that the answers a model $m$ gives to questions of difficulty $d=-1, 0, 1, 2$ are i.i.d. Bernoulli trials with success probability $p_{m,d}$. The distribution of the total number of correct answers is then $\text{Bin}(N=100, p_{m,d})$, which has variance $N \cdot p_{m,d} \cdot (1 - p_{m,d})$.
+<!-- Minor comment but it overlaps with the notation for the number of digits $d$ -->
 
 If we happen to have decreasing probabilities of success, i.e. $p_{m,-1} > p_{m,0} > p_{m,1} > p_{m,2} > 0.5$ as is the case for some of the models in Figure 6, then the corresponding variances must increase. Whether or not this decrease in probability of success has any relationship to the “reasoning abilities” of a model is beyond the scope of this blog :)
 
 **To summarise: the emphasis on “non-negligible variance” and “increase in variance” throughout the paper appears to be an over-interpretation of normal statistical variation.**
+<!-- Again I think is best if we avoid the word normal but use expected variation -->
 
 ## 4.4 M1, P1, P2 and No-Op results
 TODO
